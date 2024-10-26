@@ -1,0 +1,60 @@
+services:
+  fakefastapi-app:
+    build:
+      context: ./
+      dockerfile: ./backend/Dockerfile
+    container_name: fakefastapi-app
+    volumes:
+      - ./frontend:/app/frontend
+      - ./backend:/app/backend
+    ports:
+      - 8000:8000  # Mapeia a porta 8000 no host para o FastAPI
+    depends_on:
+      - db
+    environment:
+      #DATABASE_HOST: app-db
+      #DATABASE_USER: pguser         # Match the env variables from app-dB
+      #DATABASE_PASSWORD: pgpass
+      #DATABASE_NAME: pgdb
+      - DATABASE_URL=postgresql://postgres:password@db:5432/mydatabase
+      - PYTHONPATH=/app/backend:/app/frontend
+    networks:
+      - webnet
+
+  fakestreamlit-app:
+    build:
+      context: ./
+      dockerfile: ./frontend/Dockerfile
+    container_name: fakestreamlit-app
+    volumes:
+      - ./frontend:/app/frontend
+      - ./backend:/app/backend
+    ports:
+      - 8501:8501  # Mapeia a porta 8501 no host para o Streamlit
+    depends_on:
+      - fastapi-app
+    environment:
+      - PYTHONPATH=/app/backend:/app/frontend
+    networks:
+      - webnet
+
+  fakedb:
+    image: postgres:16.4
+    container_name: fakepostgres_db
+    environment:
+      POSTGRES_USER: fakepguser
+      POSTGRES_PASSWORD: fakepgpass
+      POSTGRES_DB: fakepgdb
+    ports:
+      - 5432:5432  # Mapeia a porta 5432 no host para o Postgres
+    networks:
+      - webnet
+    volumes:
+      - fakepgdata:/var/lib/postgresql/data  # Para persistir os dados
+
+networks:
+  webnet:
+
+volumes:
+  fakepgdata:
+
